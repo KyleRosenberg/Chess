@@ -101,11 +101,12 @@ def main(multi, color, socket):
     selected_piece = None
     prevmouse = False
     b = Board()
-    print("Connection made! Starting game...")
-    if color == b.turn:
-        print("Make your move!")
-    else:
-        print("Waiting for your opponent's move!")
+    if multi:
+        print("Connection made! Starting game...")
+        if color == b.turn:
+            print("Make your move!")
+        else:
+            print("Waiting for your opponent's move!")
     while not done:
         pos = pygame.mouse.get_pos()
         currmouse = pygame.mouse.get_pressed()[0]
@@ -131,10 +132,11 @@ def main(multi, color, socket):
                                 sx, sy = selected_piece.getGridPos()
                                 if b.movePiece(b.grid[sx][sy], b.grid[gx][gy]):
                                     selected_piece = None
-                                    msg = str(sx) + str(sy) + str(gx) + str(gy)
-                                    print(msg)
-                                    socket.send(msg)
-                                    print("Waiting for your opponent's move!")
+                                    if multi:
+                                        msg = str(sx) + str(sy) + str(gx) + str(gy)
+                                        print(msg)
+                                        socket.send(msg)
+                                        print("Waiting for your opponent's move!")
                             else:
                                 for i in range(64):
                                     if b.grid[i % 8][int(i / 8)] is not None:
@@ -152,17 +154,19 @@ def main(multi, color, socket):
                             sx, sy = selected_piece.getGridPos()
                             if b.movePiece(b.grid[sx][sy], b.grid[gx][gy]):
                                 selected_piece = None
-                                msg = str(sx) + str(sy) + str(gx) + str(gy)
-                                print(msg)
-                                socket.send(msg)
-                                print("Waiting for your opponent's move!")
+                                if multi:
+                                    msg = str(sx) + str(sy) + str(gx) + str(gy)
+                                    print(msg)
+                                    socket.send(msg)
+                                    print("Waiting for your opponent's move!")
                     elif selected_piece is not None:
                         sx, sy = selected_piece.getGridPos()
                         if b.movePiece(b.grid[sx][sy], b.grid[gx][gy]):
                             selected_piece = None
-                            msg = str(sx) + str(sy) + str(gx) + str(gy)
-                            socket.send(msg)
-                            print("Waiting for your opponent's move!")
+                            if multi:
+                                msg = str(sx) + str(sy) + str(gx) + str(gy)
+                                socket.send(msg)
+                                print("Waiting for your opponent's move!")
 
             if selected_piece is None:
                 for i in range(64):
@@ -211,6 +215,7 @@ def main(multi, color, socket):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
+        print(sys.argv)
         if sys.argv[1] == "join":
             try:
                 add = sys.argv[2]

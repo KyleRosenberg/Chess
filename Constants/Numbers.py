@@ -1,8 +1,8 @@
 import pygame
 
-SIZE = [800, 800]
-TOP_LEFT = [44, 44]
-SPACE_SIZE = 89
+SIZE = [600, 600]
+TOP_LEFT = [32, 32]
+SPACE_SIZE = 67
 
 W_PAWN = pygame.Rect(0, 0, 64, 64)
 B_PAWN = pygame.Rect(0, 64, 64, 64)

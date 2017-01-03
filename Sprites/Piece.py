@@ -221,13 +221,13 @@ class King(Piece):
                             if grid[nx][ny].getPiece().color != self.color:
                                 captures.append((nx, ny))
         if not self.hasMoved:
-            if not grid[0][y].getPiece().hasMoved:
+            if grid[0][y].getPiece() is not None and not grid[0][y].getPiece().hasMoved:
                 if grid[1][y].getPiece() is None and \
                     grid[2][y].getPiece() is None and not isPieceInDanger(board, self, (2, y)) and \
                     grid[3][y].getPiece() is None and not isPieceInDanger(board, self, (3, y)):
                     if not isPieceInDanger(board, self, (x, y)) and not isPieceInDanger(board, grid[0][y], (0, y)):
                         special.append((0, y))
-            if not grid[7][y].getPiece().hasMoved:
+            if grid[7][y].getPiece() is not None and not grid[7][y].getPiece().hasMoved:
                 if grid[6][y].getPiece() is None and not isPieceInDanger(board, self, (6, y)) and \
                     grid[5][y].getPiece() is None and not isPieceInDanger(board, self, (5, y)):
                     if not isPieceInDanger(board, self, (x, y)) and not isPieceInDanger(board, grid[7][y], (7, y)):

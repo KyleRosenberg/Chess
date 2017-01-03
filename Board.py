@@ -58,9 +58,9 @@ class Board:
         return grid
 
     def movePiece(self, oldTile, newTile):
-        moves, captures, special = oldTile.getPiece().getMoves(self, self.grid, oldTile.getPos()[0], oldTile.getPos()[1])
         newPos = newTile.getPos()
         oldPos = oldTile.getPos()
+        moves, captures, special = oldTile.getPiece().getMoves(self, self.grid, oldPos[0], oldPos[1])
         if newPos in moves or newPos in captures:
             if newTile.getPiece() in self.whitePieces:
                 self.whitePieces.remove(newTile.getPiece())
@@ -224,7 +224,7 @@ if __name__ == '__main__':
                 s = SocketClient(add, port)
                 main(True, "b", s)
             except:
-                print("There was an error.")
+                print(sys.exc_info())
                 quit()
         elif sys.argv[1] == "host":
             try:
@@ -233,10 +233,10 @@ if __name__ == '__main__':
                 s = SocketServer(port)
                 main(True, "w", s)
             except:
-                print("There was an error.")
+                print(sys.exc_info())
                 quit()
         else:
-            print("There was an error.")
+            print(sys.exc_info())
             quit()
 
     else:

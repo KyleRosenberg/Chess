@@ -5,7 +5,6 @@ class SocketServer:
 
     def __init__(self, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print(socket.gethostname())
         address = (socket.gethostname(), int(port))
         print("Binding")
         try:

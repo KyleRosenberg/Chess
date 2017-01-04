@@ -2,21 +2,38 @@ from Constants.Colors import *
 from Constants.Numbers import *
 from Sprites.Sprite import *
 
-def isPieceInDanger(board, piece, pos):
-    enemies = board.blackPieces if piece in board.whitePieces else board.whitePieces
+def isPieceInDanger(board, piece, pos, testPos=None):
+    if testPos is None:
+        testPos = pos
+    enemies = board.blackPieces if piece.color == "w" else board.whitePieces
     caps = []
-    gridPX, gridY = piece.getGridPos()
-    board.grid[gridPX][gridY].setPiece()
+    gridX, gridY = piece.getGridPos()
+    board.grid[gridX][gridY].setPiece()
     for e in enemies:
         if not isinstance(e, King):
-            xy = e.getGridPos()
-            m, c, s = e.getMoves(board, board.grid, xy[0], xy[1])
-            caps += c
-            caps += m
-    board.grid[gridPX][gridY].setPiece(piece)
+            x, y = e.getGridPos()
+            if isinstance(e, Pawn):
+                caps += e.getCaptures(board, board.grid, x, y)
+            else:
+                m, c, s = e.getMoves(board, board.grid, x, y)
+                caps += c
+                caps += m
+    board.grid[gridX][gridY].setPiece(piece)
     for c in caps:
-        if pos[0] == c[0] and pos[1]==c[1]:
+        if testPos[0] == c[0] and testPos[1] == c[1]:
             return True
+    if isinstance(piece, King):
+        for x in range(testPos[0]-1, testPos[0]+2):
+            if x in range(8):
+                for y in range(testPos[1]-1, testPos[1]+2):
+                    if y in range(8):
+                        if not (x == testPos[0] and y == testPos[1]):
+                            p = board.grid[x][y].getPiece()
+                            if p is not None:
+                                if p.color != piece.color:
+                                    if isinstance(p, King):
+                                        return True
+
     return False
 
 class Piece:
@@ -30,6 +47,8 @@ class Piece:
 
     def getGridPos(self):
         x, y = self.sprite.getPos()
+        if x > TOP_LEFT[0] + SPACE_SIZE*8:
+            x-=SPACE_SIZE
         return int((x-TOP_LEFT[0])/SPACE_SIZE), int((y-TOP_LEFT[1])/SPACE_SIZE)
 
     def setPos(self, x, y):
@@ -37,6 +56,9 @@ class Piece:
 
     def getMoves(self, board, grid, x, y):
         print("Get moves")
+
+    def getCaptures(self, board, grid, x, y):
+        print("Get captures")
 
     def moved(self):
         self.hasMoved = True
@@ -52,6 +74,18 @@ class Pawn(Piece):
     def __init__(self, color, x, y):
         filename = color + "pawn"
         Piece.__init__(self, color, x, y, filename)
+
+    def getCaptures(self, board, grid, x, y):
+        offset = -1 if self.color == "w" else 1
+        captures = []
+        if y+offset in range(8):
+            if x+1 in range(8):
+                if grid[x+1][y+offset].getPiece() is None:
+                    captures.append((x+1, y+offset))
+            if x-1 in range(8):
+                if grid[x-1][y+offset].getPiece() is None:
+                    captures.append((x-1, y+offset))
+        return captures
 
     def getMoves(self, board, grid, x, y):
         offset = -1 if self.color == "w" else 1
@@ -216,8 +250,8 @@ class King(Piece):
         special = []
         for nx in range(x-1, x+2):
             for ny in range(y-1, y+2):
-                if nx != ny and nx in range(8) and ny in range(8):
-                    if not isPieceInDanger(board, self, (nx, ny)):
+                if not (nx == x and ny == y) and nx in range(8) and ny in range(8):
+                    if not isPieceInDanger(board, self, (x, y), (nx, ny)):
                         if grid[nx][ny].getPiece() is None:
                             moves.append((nx, ny))
                         else:
@@ -226,13 +260,13 @@ class King(Piece):
         if not self.hasMoved:
             if grid[0][y].getPiece() is not None and not grid[0][y].getPiece().hasMoved:
                 if grid[1][y].getPiece() is None and \
-                    grid[2][y].getPiece() is None and not isPieceInDanger(board, self, (2, y)) and \
-                    grid[3][y].getPiece() is None and not isPieceInDanger(board, self, (3, y)):
+                    grid[2][y].getPiece() is None and not isPieceInDanger(board, self, (x, y), (2, y)) and \
+                    grid[3][y].getPiece() is None and not isPieceInDanger(board, self, (x, y), (3, y)):
                     if not isPieceInDanger(board, self, (x, y)) and not isPieceInDanger(board, grid[0][y].getPiece(), (0, y)):
                         special.append((0, y))
             if grid[7][y].getPiece() is not None and not grid[7][y].getPiece().hasMoved:
-                if grid[6][y].getPiece() is None and not isPieceInDanger(board, self, (6, y)) and \
-                    grid[5][y].getPiece() is None and not isPieceInDanger(board, self, (5, y)):
+                if grid[6][y].getPiece() is None and not isPieceInDanger(board, self, (x, y), (6, y)) and \
+                    grid[5][y].getPiece() is None and not isPieceInDanger(board, self, (x, y), (5, y)):
                     if not isPieceInDanger(board, self, (x, y)) and not isPieceInDanger(board, grid[7][y].getPiece(), (7, y)):
                         special.append((7, y))
         return moves, captures, special

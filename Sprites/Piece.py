@@ -5,12 +5,15 @@ from Sprites.Sprite import *
 def isPieceInDanger(board, piece, pos):
     enemies = board.blackPieces if piece in board.whitePieces else board.whitePieces
     caps = []
+    gridPX, gridY = piece.getGridPos()
+    board.grid[gridPX][gridY].setPiece()
     for e in enemies:
         if not isinstance(e, King):
             xy = e.getGridPos()
             m, c, s = e.getMoves(board, board.grid, xy[0], xy[1])
             caps += c
             caps += m
+    board.grid[gridPX][gridY].setPiece(piece)
     for c in caps:
         if pos[0] == c[0] and pos[1]==c[1]:
             return True

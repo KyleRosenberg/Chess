@@ -29,6 +29,7 @@ class Board:
         self.turn = "w"
         self.times = times
         self.timer = times[0] > 0
+        self.lastmove = []
 
     def initGrid(self):
         grid = [[None]*8 for i in range(12)]
@@ -90,15 +91,18 @@ class Board:
                     else:
                         self.blackPieces.append(q)
             self.turn = "b" if self.turn == "w" else "w"
+            self.lastmove = [oldTile, newTile]
             return True
         if special is not None:
             if newPos in special:
                 if newPos[0] < oldPos[0]:
                     self.grid[oldPos[0]-2][oldPos[1]].setPiece(oldTile.getPiece())
                     self.grid[oldPos[0]-1][oldPos[1]].setPiece(newTile.getPiece())
+                    self.lastmove = [oldTile, newTile, self.grid[oldPos[0]-2][oldPos[1]], self.grid[oldPos[0]-1][oldPos[1]]]
                 else:
                     self.grid[oldPos[0]+2][oldPos[1]].setPiece(oldTile.getPiece())
                     self.grid[oldPos[0]+1][oldPos[1]].setPiece(newTile.getPiece())
+                    self.lastmove = [oldTile, newTile, self.grid[oldPos[0]+2][oldPos[1]], self.grid[oldPos[0]+1][oldPos[1]]]
                 oldTile.getPiece().moved()
                 oldTile.setPiece()
                 newTile.getPiece().moved()
@@ -197,6 +201,8 @@ def main(multi, color, socket, time=-1):
                                 for i in range(64):
                                     if b.grid[i % 8][int(i / 8)] is not None:
                                         b.grid[i % 8][int(i / 8)].resetColor()
+                                for t in b.lastmove:
+                                    t.setDrawColor(LGREY)
                             elif b.grid[gx][gy].getDrawColor() == PURPLE:
                                 sx, sy = selected_piece.getGridPos()
                                 if b.movePiece(b.grid[sx][sy], b.grid[gx][gy]):
@@ -212,6 +218,8 @@ def main(multi, color, socket, time=-1):
                                 for i in range(64):
                                     if b.grid[i % 8][int(i / 8)] is not None:
                                         b.grid[i % 8][int(i / 8)].resetColor()
+                                for t in b.lastmove:
+                                    t.setDrawColor(LGREY)
                                 selected_piece = b.grid[gx][gy].getPiece()
                                 moves, captures, special = b.grid[gx][gy].getPiece().getMoves(b, b.grid, gx, gy)
                                 for m in moves:
@@ -248,6 +256,8 @@ def main(multi, color, socket, time=-1):
                 for i in range(64):
                     if b.grid[i % 8][int(i / 8)] is not None:
                         b.grid[i % 8][int(i / 8)].resetColor()
+                for t in b.lastmove:
+                    t.setDrawColor(LGREY)
                 if gx > -1 and gy > -1:
                     if b.grid[gx][gy].getPiece() is not None:
                         if b.grid[gx][gy].getPiece().color == b.turn:

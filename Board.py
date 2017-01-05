@@ -267,14 +267,14 @@ def main(multi, color, socket, time=-1):
         for p in b.whitePieces:
             pos = p.getGridPos()
             m, c, s = p.getMoves(b, b.grid, pos[0], pos[1])
-            wmoves += m
+            wmoves += m + c
             if s is not None:
                 wmoves += s
             caps += c
         for p in b.blackPieces:
             pos = p.getGridPos()
             m, c, s = p.getMoves(b, b.grid, pos[0], pos[1])
-            bmoves += m
+            bmoves += m + c
             if s is not None:
                 bmoves += s
             caps += c
@@ -284,17 +284,17 @@ def main(multi, color, socket, time=-1):
                     b.grid[c[0]][c[1]].setDrawColor(RED)
         if len(wmoves) == 0:
             kingpos = b.getKingPos("w")
-            if b.grid[kingpos[0]][kingpos[1]].getDrawColor() is RED:
+            if b.grid[kingpos[0]][kingpos[1]].getDrawColor() is not RED:
                 print("The game has ended in a stalemate! Nobody wins!")
             else:
                 print("White has been check mated! Black wins!")
             done = True
         if len(bmoves) == 0:
             kingpos = b.getKingPos("b")
-            if b.grid[kingpos[0]][kingpos[1]].getDrawColor() is RED:
+            if b.grid[kingpos[0]][kingpos[1]].getDrawColor() is not RED:
                 print("The game has ended in a stalemate! Nobody wins!")
             else:
-                print("Black has been check mated! Black wins!")
+                print("Black has been check mated! White wins!")
             done = True
 
 
@@ -344,9 +344,11 @@ if __name__ == '__main__':
             except:
                 print(sys.exc_info())
                 quit()
+        elif sys.argv[1] == "timer":
+            time = int(sys.argv[2])
+            main(False, "na", None, time)
         else:
             print(sys.exc_info())
             quit()
-
     else:
         main(False, "na", None)

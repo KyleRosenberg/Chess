@@ -167,8 +167,7 @@ class Knight(Piece):
         movepattern = [(x + 1, y + 2), (x - 1, y + 2), (x + 1, y - 2), (x - 1, y - 2), (x + 2, y + 1), (x + 2, y - 1), (x - 2, y + 1), (x - 2, y - 1)]
         for mp in movepattern:
             if mp[0] in range(8) and mp[1] in range(8):
-                if not checkCheck or (
-                    checkCheck and not isPieceInDanger(board, self, mp, board.getKingPos(self.color))):
+                if not checkCheck or (checkCheck and not isPieceInDanger(board, self, mp, board.getKingPos(self.color))):
                     if grid[mp[0]][mp[1]].getPiece() is None:
                         moves.append(mp)
                     else:

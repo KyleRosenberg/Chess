@@ -17,17 +17,18 @@ from Network.Socket import SocketServer
 
 class Board:
 
-    def __init__(self):
+    def __init__(self, times=None):
         pygame.init()
         self.screen = pygame.display.set_mode(SIZE)
         pygame.display.set_caption("Chess Board")
         self.background = Sprite("Sprites/chessboard.jpg")
-        sqr = min(SIZE[0], SIZE[1])
-        self.background.setSize(sqr, sqr)
+        self.background.setSize(BOARD_SIZE[0], BOARD_SIZE[1])
         self.whitePieces = []
         self.blackPieces = []
         self.grid = self.initGrid()
         self.turn = "w"
+        self.times = times
+        self.timer = times[0] > 0
 
     def initGrid(self):
         grid = [[None]*8 for i in range(12)]
@@ -126,7 +127,6 @@ class Board:
             for y in range(8):
                 if self.grid[x][y] is not None:
                     self.grid[x][y].draw(self.screen)
-        pygame.display.flip()
 
     def listenForOpponent(self, socket):
         msg = socket.receive()
@@ -145,14 +145,30 @@ class Board:
                     self.whitePieces.append(q)
                 else:
                     self.blackPieces.append(q)
+        if len(msg) > 4:
+            otime = int(msg[4:])
+            if not self.timer:
+                mins = int(otime/60000) + 1
+                if self.turn == "b":
+                    self.times[1] = mins*60000
+                else:
+                    self.times[0] = mins*60000
+            if self.turn == "b":
+                self.times[0] = otime
+            else:
+                self.times[1] = otime
+            self.timer = True
         print("Make your move!")
 
 
-def main(multi, color, socket):
+def main(multi, color, socket, time=-1):
     done = False
     selected_piece = None
     prevmouse = False
-    b = Board()
+    b = Board([time*60000, time*60000])
+    clock = pygame.time.Clock()
+    clock.tick()
+    font = pygame.font.Font("Sprites/digital-7(mono).ttf", 32)
     if multi:
         print("Connection made! Starting game...")
         if color == b.turn:
@@ -187,6 +203,8 @@ def main(multi, color, socket):
                                     selected_piece = None
                                     if multi:
                                         msg = str(sx) + str(sy) + str(gx) + str(gy)
+                                        if b.timer:
+                                            msg += str(b.times[0]) if color == "w" else str(b.times[1])
                                         socket.send(msg)
                                         print("Waiting for your opponent's move!")
                                         _thread.start_new_thread(b.listenForOpponent, (socket,))
@@ -209,6 +227,8 @@ def main(multi, color, socket):
                                 selected_piece = None
                                 if multi:
                                     msg = str(sx) + str(sy) + str(gx) + str(gy)
+                                    if b.timer:
+                                        msg += str(b.times[0]) if color == "w" else str(b.times[1])
                                     socket.send(msg)
                                     print("Waiting for your opponent's move!")
                                     _thread.start_new_thread(b.listenForOpponent, (socket,))
@@ -218,6 +238,8 @@ def main(multi, color, socket):
                             selected_piece = None
                             if multi:
                                 msg = str(sx) + str(sy) + str(gx) + str(gy)
+                                if b.timer:
+                                    msg += str(b.times[0]) if color == "w" else str(b.times[1])
                                 socket.send(msg)
                                 print("Waiting for your opponent's move!")
                                 _thread.start_new_thread(b.listenForOpponent, (socket,))
@@ -237,26 +259,67 @@ def main(multi, color, socket):
                             if special is not None:
                                 for s in special:
                                     b.grid[s[0]][s[1]].setDrawColor(PURPLE)
-        elif multi:
-            b.draw()
 
         #check check
         caps = []
+        wmoves = []
+        bmoves = []
         for p in b.whitePieces:
             pos = p.getGridPos()
             m, c, s = p.getMoves(b, b.grid, pos[0], pos[1])
+            wmoves += m
+            if s is not None:
+                wmoves += s
             caps += c
         for p in b.blackPieces:
             pos = p.getGridPos()
             m, c, s = p.getMoves(b, b.grid, pos[0], pos[1])
+            bmoves += m
+            if s is not None:
+                bmoves += s
             caps += c
         if len(caps)>0:
             for c in caps:
                 if isinstance(b.grid[c[0]][c[1]].getPiece(), King):
                     b.grid[c[0]][c[1]].setDrawColor(RED)
+        if len(wmoves) == 0:
+            kingpos = b.getKingPos("w")
+            if b.grid[kingpos[0]][kingpos[1]].getDrawColor() is RED:
+                print("The game has ended in a stalemate! Nobody wins!")
+            else:
+                print("White has been check mated! Black wins!")
+            done = True
+        if len(bmoves) == 0:
+            kingpos = b.getKingPos("b")
+            if b.grid[kingpos[0]][kingpos[1]].getDrawColor() is RED:
+                print("The game has ended in a stalemate! Nobody wins!")
+            else:
+                print("Black has been check mated! Black wins!")
+            done = True
 
 
         b.draw()
+        delta = clock.tick()
+        if b.timer:
+            if b.turn == "w":
+                b.times[0] -= delta
+            else:
+                b.times[1] -= delta
+            minsb = str(int(b.times[1]/60000))
+            secsb = "%02d" % int(b.times[1]%60000/1000)
+            minsw = str(int(b.times[0]/60000))
+            secsw = "%02d" % int(b.times[0]%60000/1000)
+            time = font.render(minsb + ":" + secsb, 1, WHITE)
+            y = (TOP_LEFT[1]-font.get_height())/2-2
+            wid = font.size(minsb + ":" + secsb)[0]
+            x = (BOARD_SIZE[0] + ((SIZE[0]-BOARD_SIZE[0]) - wid)/2)
+            b.screen.blit(time, (x, y))
+            time = font.render(minsw + ":" + secsw, 1, WHITE)
+            y = BOARD_SIZE[1] - TOP_LEFT[1] + (TOP_LEFT[1] - font.get_height())/2-2
+            wid = font.size(minsw + ":" + secsw)[0]
+            x = (BOARD_SIZE[0] + ((SIZE[0]-BOARD_SIZE[0]) - wid)/2)
+            b.screen.blit(time, (x, y))
+        pygame.display.flip()
         prevmouse = currmouse
 
 if __name__ == '__main__':
@@ -273,10 +336,11 @@ if __name__ == '__main__':
                 quit()
         elif sys.argv[1] == "host":
             try:
+                time = int(sys.argv[4]) if len(sys.argv)>3 and sys.argv[3] == "timer" else -1
                 port = sys.argv[2]
                 print("Waiting for client connection...")
                 s = SocketServer(port)
-                main(True, "w", s)
+                main(True, "w", s, time)
             except:
                 print(sys.exc_info())
                 quit()

@@ -1,6 +1,7 @@
 import pygame
 
 SIZE = [932, 600]
+BOARD_SIZE = [600, 600]
 TOP_LEFT = [32, 32]
 SPACE_SIZE = 67
 
